@@ -1,26 +1,22 @@
 import discord
-import time
+import time, locale
 from pycoingecko import CoinGeckoAPI
 
 token = 'cope'
 guildName = 'COPE'
 botToken = 'your_bot_token'
 
-async def update(price,change):
+async def update(marketcap,dailyvol):
   print('updating')
   try:
-    if(float(change) > 0):
-      stt = discord.Status.online
-      change = "+" + change
-    else:
-      stt = discord.Status.dnd
-    await client.change_presence(
+    stt = discord.Status.online
+    await client.dailyvol_presence(
         status= stt,
         activity=discord.Activity(type=discord.ActivityType.watching,
-                                  name=change+"%" + " | copeusd coingecko price | made by @vicyyn")
+                                  name="24hr Vol "+ dailyvol +"USD | Market cap "+ marketcap + "USD")
     );
     guild = [ guild for guild in client.guilds if guild.name== guildName]
-    await guild[0].me.edit(nick = price + " USD")
+    await guild[0].me.edit(nick = marketcap + " USD")
   except Exception as e:
     print(e)
   print('updated')
@@ -28,13 +24,12 @@ async def update(price,change):
 async def main():
   starttime = time.time()
   while True:
-      coin = cg.get_price(include_24hr_change='true',ids=token, vs_currencies='usd')
-      print(coin[token]['usd'])
-      price = str("{:.2f}".format(coin[token]['usd']))
-      change = str(coin[token]['usd_24h_change'])
-      change = "{:.2f}".format(float(change))
-      print("price is : " + price + " change : " + change)
-      await update(price,change)
+      coin = cg.get_marketcap(include_market_cap='true', include_24hr_vol='true', ids=token, vs_currencies='usd')
+      print(coin[token]['usd_market_cap'])
+      marketcap = str(locale.currency( coin[token]['usd_market_cap'] , grouping=True ))
+      dailyvol = str(locale.currency( coin[token]['usd_24h_vol'] , grouping=True ))
+      print("marketcap is : " + marketcap + " 24hvolume : " + dailyvol)
+      await update(marketcap,dailyvol)
       time.sleep(20.0 - ((time.time() - starttime) % 20.0))
 
 
